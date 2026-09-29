@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MGP AI</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background-color: #1e293b;
+            padding: 18px 20px;
+            text-align: center;
+            border-bottom: 2px solid #3b82f6;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        header h1 {
+            color: #60a5fa;
+            font-size: 26px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        #chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            font-size: 15px;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: #2563eb;
+            color: #ffffff;
+            border-bottom-right-radius: 2px;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background-color: #334155;
+            color: #f1f5f9;
+            border-bottom-left-radius: 2px;
+            border: 1px solid #475569;
+        }
+
+        .input-container {
+            padding: 15px 20px;
+            background-color: #1e293b;
+            display: flex;
+            gap: 10px;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background-color: #0f172a;
+            color: #fff;
+            outline: none;
+            font-size: 15px;
+        }
+
+        #user-input:focus {
+            border-color: #3b82f6;
+        }
+
+        button {
+            padding: 14px 24px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .loading {
+            font-style: italic;
+            opacity: 0.8;
+            color: #93c5fd;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>⚡ MGP AI ⚡</h1>
+    </header>
+
+    <div id="chat-box">
+        <div class="message ai-message">Merhaba! Ben MGP AI. Sorularını yanıtlamaya hazırım!</div>
+    </div>
+
+    <div class="input-container">
+        <input type="text" id="user-input" placeholder="MGP AI'ya bir şeyler yazın..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendMessage()">Gönder</button>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const inputField = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const message = inputField.value.trim();
+
+            if (!message) return;
+
+            appendMessage(message, 'user-message');
+            inputField.value = '';
+
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message ai-message loading';
+            loadingDiv.innerText = 'MGP AI düşünüyor...';
+            chatBox.appendChild(loadingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch('https://text.pollinations.ai/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: 'system', content: 'Senin adın MGP AI. Türkçe konuşan, oyunculara ve kullanıcılara yardımcı olan çok akıllı bir yapay zekasın.' },
+                            { role: 'user', content: message }
+                        ],
+                        model: 'openai'
+                    })
+                });
+
+                const aiReply = await response.text();
+                chatBox.removeChild(loadingDiv);
+
+                if (aiReply) {
+                    appendMessage(aiReply, 'ai-message');
+                } else {
+                    appendMessage("Şu an cevap veremiyorum, lütfen tekrar dene.", 'ai-message');
+                }
+            } catch (error) {
+                chatBox.removeChild(loadingDiv);
+                appendMessage("Bağlantı hatası oluştu, tekrar dene!", 'ai-message');
+            }
+        }
+
+        function appendMessage(text, className) {
+            const chatBox = document.getElementById('chat-box');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            messageDiv.innerText = text;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
